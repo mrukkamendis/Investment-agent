@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f6b4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Agent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Investment Agent</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#15202b;--muted:#5b6876;--line:#dfe4ea;--accent:#0f6b4a;
+--in:#0d7a4f;--in-bg:#e1f3ea;--wait:#8a5a00;--wait-bg:#fbefd2;--out:#a8322d;--out-bg:#fbe5e3;
+--na:#4a5563;--na-bg:#e8ebef;--bar:rgba(255,255,255,.94)}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--card:#18202a;--text:#e7ecf1;--muted:#98a5b3;
+--line:#29333f;--accent:#58d19c;--in:#58d19c;--in-bg:#12382a;--wait:#f0c05a;--wait-bg:#3a2e12;
+--out:#f08a84;--out-bg:#43201e;--na:#b6bfca;--na-bg:#29333f;--bar:rgba(24,32,42,.94)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+header{position:sticky;top:0;z-index:5;background:var(--bar);backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hrow{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px}
+.hrow h1{font-size:1.1rem;margin:0;flex:1}
+.status{font-size:.78rem;color:var(--muted);display:block;font-weight:400}
+main{max-width:760px;margin:0 auto;padding:12px 14px calc(84px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){.btn{color:#0e1318}}
+.btn:disabled{opacity:.55}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:.85rem}
+.banner{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--wait);
+border-radius:10px;padding:10px 12px;font-size:.88rem;margin:4px 0 12px}
+.err{border-left-color:var(--out)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin:10px 0}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sym{font-size:1.1rem;font-weight:700}
+.kind{color:var(--muted);font-size:.82rem}
+.badge{font-size:.74rem;font-weight:700;letter-spacing:.03em;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.IN{color:var(--in);background:var(--in-bg)}.WAIT{color:var(--wait);background:var(--wait-bg)}
+.OUT{color:var(--out);background:var(--out-bg)}.NO_DATA,.ERROR{color:var(--na);background:var(--na-bg)}
+.why{margin:8px 0 0;font-size:.95rem}
+dl.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:10px 0 0}
+dl.grid dt{color:var(--muted);font-size:.74rem}
+dl.grid dd{margin:0;font-size:.9rem;font-variant-numeric:tabular-nums}
+.plan{margin:10px 0 0;padding:9px 11px;border-radius:9px;background:var(--in-bg);font-size:.9rem}
+.note{margin:7px 0 0;color:var(--wait);font-size:.85rem}
+.summary{font-size:.86rem;color:var(--muted);margin:2px 0 6px}
+h2{font-size:1.02rem;margin:18px 0 8px}
+.small{color:var(--muted);font-size:.84rem}
+ul.small{padding-left:18px;margin:8px 0}ul.small li{margin:3px 0}
+.bt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.bt .row{display:flex;justify-content:space-between;font-size:.9rem;padding:3px 0;font-variant-numeric:tabular-nums}
+.bt .row span:first-child{color:var(--muted)}
+.verdict{margin-top:6px;font-size:.85rem;font-weight:600}
+.good{color:var(--in)}.bad{color:var(--out)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--bar);backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav .tabs{max-width:760px;margin:0 auto;display:flex}
+nav button{flex:1;border:0;background:none;padding:10px 0 9px;font-size:.78rem;color:var(--muted);
+display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:22px;height:22px}
+nav button[aria-selected=true]{color:var(--accent);font-weight:600}
+label.f{display:block;margin:10px 0}
+label.f span{display:block;font-size:.84rem;color:var(--muted);margin-bottom:4px}
+input,select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);
+border-radius:9px;padding:9px 10px;width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.wl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.wl:last-child{border-bottom:0}
+.wl .m{color:var(--muted);font-size:.8rem}
+.x{border:1px solid var(--line);background:none;border-radius:8px;padding:4px 10px;font-size:.82rem;color:var(--out)}
+.addrow{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-top:10px}
+details.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0}
+details.box summary{cursor:pointer;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px;font-size:.82rem}
+.chip.on{background:var(--in-bg);color:var(--in);border-color:transparent}
+table.log{width:100%;border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums}
+table.log td,table.log th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+table.log th{color:var(--muted);font-weight:600;font-size:.74rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));
+background:var(--text);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:.86rem;z-index:9;
+opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;
+border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="hrow">
+  <h1>Investment Agent<span class="status" id="status">Not run yet</span></h1>
+  <button class="btn sm" id="refresh">Refresh</button>
+</div></header>
+
+<main>
+  <section id="tab-signals"></section>
+  <section id="tab-backtest" hidden></section>
+  <section id="tab-log" hidden></section>
+  <section id="tab-settings" hidden></section>
+</main>
+
+<nav><div class="tabs" role="tablist">
+  <button role="tab" data-tab="signals" aria-selected="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Signals</button>
+  <button role="tab" data-tab="backtest" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v7h7"/></svg>Backtest</button>
+  <button role="tab" data-tab="log" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Log</button>
+  <button role="tab" data-tab="settings" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Settings</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/*
+ * Investment Agent app v0.2 - read-only.
+ * Same rules as agent.py v0.1: downloads public Binance data straight from
+ * this phone, applies three trend rules, backtests them, and sizes positions.
+ * It has no API key and cannot place trades.
+ */
+const VERSION = "0.2";
+const DAY = 86400000;
+
+const DEFAULTS = {
+  portfolio_usdt: 1000,
+  risk_per_trade_pct: 1.0,
+  max_position_pct: 20,
+  watchlist: [
+    {symbol: "BTCUSDT", market: "spot"},
+    {symbol: "ETHUSDT", market: "spot"},
+    {symbol: "XAUUSDT", market: "futures"},
+    {symbol: "TSLAUSDT", market: "futures"},
+    {symbol: "NVDAUSDT", market: "futures"},
+    {symbol: "QQQUSDT", market: "futures"}
+  ],
+  strategy: {fast_sma_days: 50, slow_sma_days: 200, momentum_days: 90, atr_days: 14, stop_atr_multiple: 2.5},
+  fee_pct_per_trade: 0.1,
+  funding_warning_annual_pct: 15,
+  history_days: 2000,
+  endpoints: {spot: "https://api.binance.com", futures: "https://fapi.binance.com"}
+};
+
+const SIGNAL_TEXT = {IN: "HOLD / BUY", WAIT: "WAIT", OUT: "STAY OUT", NO_DATA: "NOT ENOUGH HISTORY", ERROR: "DATA ERROR"};
+const SESSION_LABELS = {REGULAR: "open (regular hours)", PRE_MARKET: "pre-market", AFTER_MARKET: "after-hours",
+  OVERNIGHT: "overnight session", NO_TRADING: "closed"};
+const UNDERLYING_LABELS = {EQUITY: "Equity", COMMODITY: "Commodity", KR_EQUITY: "Korean equity",
+  HK_EQUITY: "Hong Kong equity", CN_EQUITY: "China equity", FX: "Forex"};
+
+/* ---------- storage (works when hosted on your own site; fails safely) ---------- */
+const store = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem("ia." + key); return v == null ? fallback : JSON.parse(v); }
+    catch (e) { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem("ia." + key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  }
+};
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function loadConfig() {
+  const saved = store.get("config", null);
+  const cfg = clone(DEFAULTS);
+  if (saved && typeof saved === "object") {
+    for (const k of Object.keys(DEFAULTS)) {
+      if (k === "strategy" || k === "endpoints") Object.assign(cfg[k], saved[k] || {});
+      else if (saved[k] !== undefined) cfg[k] = saved[k];
+    }
+  }
+  return cfg;
+}
+let CFG = loadConfig();
+
+/* ---------- formatting ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+function fmtPrice(x) {
+  if (x >= 100) return x.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (x >= 1) return x.toLocaleString("en-US", {minimumFractionDigits: 3, maximumFractionDigits: 3});
+  return Number(x.toPrecision(6)).toString();
+}
+function fmtPct(x, signed = true, digits = 1) {
+  const s = Math.abs(x).toFixed(digits);
+  const neg = x < 0 && Number(s) !== 0;
+  return (neg ? "-" : (signed ? "+" : "")) + s + "%";
+}
+const fmtUsdt = x => Math.round(x).toLocaleString("en-US");
+const utcDate = ms => new Date(ms).toISOString().slice(0, 10);
+function ago(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60);
+  if (h < 24) return h + " h ago";
+  return Math.round(h / 24) + " days ago";
+}
+
+/* ---------- 1. DATA ---------- */
+class AgentError extends Error {}
+const unreachable = {};
+
+async function getJSON(base, path, params, retries = 3) {
+  if (unreachable[base]) throw new AgentError(unreachable[base]);
+  const url = base.replace(/\/+$/, "") + path + (params ? "?" + new URLSearchParams(params) : "");
+  let problem = "unknown problem", offline = false;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const res = await fetch(url, {signal: ctl.signal});
+      clearTimeout(timer);
+      if (res.ok) {
+        try { return await res.json(); } catch (e) { problem = "Binance sent a reply that was not valid JSON"; }
+      } else if (res.status === 418 || res.status === 429 || res.status >= 500) {
+        problem = "Binance is busy (HTTP " + res.status + ")";
+      } else if (res.status === 403 || res.status === 451) {
+        throw new AgentError("Binance refused the connection (HTTP " + res.status + "). It blocks some " +
+          "countries and networks. Try a different connection, e.g. mobile data instead of Wi-Fi.");
+      } else {
+        let msg = "";
+        try { msg = (await res.json()).msg || ""; } catch (e) {}
+        throw new AgentError("Binance said: " + (msg || "error") + " (HTTP " + res.status + ")");
+      }
+    } catch (e) {
+      clearTimeout(timer);
+      if (e instanceof AgentError) throw e;
+      problem = e.name === "AbortError" ? "Binance took too long to answer" :
+        "Could not reach Binance. Check your internet connection. Some office or public Wi-Fi networks block it; try mobile data.";
+      offline = true;
+    }
+    if (attempt < retries - 1) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+  }
+  if (offline) unreachable[base] = problem;
+  throw new AgentError(problem);
+}
+
+async function fetchCandles(market, symbol, days) {
+  const base = market === "spot" ? CFG.endpoints.spot : CFG.endpoints.futures;
+  const path = market === "spot" ? "/api/v3/klines" : "/fapi/v1/klines";
+  const page = market === "spot" ? 1000 : 1500;
+  const rows = new Map();
+  let endTime = null;
+  const wanted = days + 1;
+  while (rows.size < wanted) {
+    const limit = Math.min(page, wanted - rows.size);
+    const params = {symbol, interval: "1d", limit};
+    if (endTime !== null) params.endTime = endTime;
+    const batch = await getJSON(base, path, params);
+    if (!Array.isArray(batch) || !batch.length) break;
+    const before = rows.size;
+    for (const r of batch) rows.set(Number(r[0]), r);
+    if (batch.length < limit || rows.size === before) break;
+    endTime = Number(batch[0][0]) - 1;
+  }
+  const now = Date.now();
+  return [...rows.keys()].sort((a, b) => a - b)
+    .map(k => rows.get(k))
+    .filter(r => Number(r[6]) < now)
+    .map(r => ({open_time: Number(r[0]), high: +r[2], low: +r[3], close: +r[4]}));
+}
+
+async function fetchCatalogue() {
+  const info = await getJSON(CFG.endpoints.futures, "/fapi/v1/exchangeInfo");
+  const out = {};
+  for (const s of (info && info.symbols) || []) out[s.symbol] = s;
+  return out;
+}
+
+async function fetchFunding(symbol, days = 30) {
+  const now = Date.now();
+  const rows = await getJSON(CFG.endpoints.futures, "/fapi/v1/fundingRate",
+    {symbol, startTime: now - days * DAY, limit: 1000});
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const total = rows.reduce((a, r) => a + Number(r.fundingRate), 0);
+  const span = Math.max(1, (now - Number(rows[0].fundingTime)) / DAY);
+  return {total_pct: total * 100, span_days: span, annual_pct: total * 100 / span * 365};
+}
+
+async function fetchSessions() {
+  const d = await getJSON(CFG.endpoints.futures, "/fapi/v1/tradingSchedule");
+  return (d && d.marketSchedules) || {};
+}
+
+function currentSession(schedules, underlying) {
+  const m = schedules[String(underlying || "").toUpperCase()];
+  if (!m) return null;
+  const now = Date.now();
+  for (const s of m.sessions || []) {
+    if (Number(s.startTime || 0) <= now && now < Number(s.endTime || 0)) {
+      return SESSION_LABELS[s.type] || (s.type ? s.type.toLowerCase() : null);
+    }
+  }
+  return null;
+}
+
+/* ---------- 2. SIGNALS ---------- */
+function ruleStates(closes, st) {
+  const fast = st.fast_sma_days, slow = st.slow_sma_days, mom = st.momentum_days;
+  const n = closes.length, prefix = [0];
+  for (const c of closes) prefix.push(prefix[prefix.length - 1] + c);
+  const sma = (t, w) => (prefix[t + 1] - prefix[t + 1 - w]) / w;
+  const first = Math.max(slow - 1, fast - 1, mom);
+  const out = new Array(n).fill(null);
+  for (let t = first; t < n; t++) {
+    const f = sma(t, fast), s = sma(t, slow), m = closes[t] / closes[t - mom] - 1;
+    const a = closes[t] > s, b = f > s, c = m > 0;
+    out[t] = {state: a && b && c ? "IN" : (!a ? "OUT" : "WAIT"), a, b, c, sma_fast: f, sma_slow: s, momentum: m};
+  }
+  return out;
+}
+
+function averageTrueRange(candles, days) {
+  if (candles.length < days + 1) return null;
+  let sum = 0;
+  for (let i = candles.length - days; i < candles.length; i++) {
+    const pc = candles[i - 1].close, h = candles[i].high, l = candles[i].low;
+    sum += Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc));
+  }
+  return sum / days;
+}
+
+function annualVolatility(closes, days = 30) {
+  if (closes.length < days + 1) return null;
+  const logs = [];
+  for (let i = closes.length - days; i < closes.length; i++) logs.push(Math.log(closes[i] / closes[i - 1]));
+  const mean = logs.reduce((a, b) => a + b, 0) / days;
+  const v = logs.reduce((a, x) => a + (x - mean) ** 2, 0) / (days - 1);
+  return Math.sqrt(v) * Math.sqrt(365) * 100;
+}
+
+function positionSize(close, atr) {
+  if (!atr || atr <= 0) return null;
+  const portfolio = Number(CFG.portfolio_usdt);
+  const dist = CFG.strategy.stop_atr_multiple * atr;
+  const stop = close - dist;
+  if (stop <= 0) return null;
+  const byRisk = portfolio * CFG.risk_per_trade_pct / 100 / (dist / close);
+  const cap = portfolio * CFG.max_position_pct / 100;
+  const size = Math.min(byRisk, cap);
+  return {usdt: size, pct_of_portfolio: size / portfolio * 100, stop_price: stop, stop_pct: dist / close * 100,
+    loss_if_stopped: size * dist / close, capped: byRisk > cap};
+}
+
+/* ---------- 3. BACKTEST ---------- */
+function backtest(closes, states, feePct) {
+  const start = states.findIndex(s => s !== null);
+  if (start < 0) return null;
+  const days = closes.length - 1 - start;
+  if (days < 30) return null;
+  const fee = feePct / 100;
+  let rule = 1, hold = 1 - fee, rp = 1, hp = hold, rdd = 0, hdd = 0, pos = 0, entries = 0, inDays = 0;
+  for (let t = start; t < closes.length - 1; t++) {
+    const target = states[t].state === "IN" ? 1 : 0;
+    if (target !== pos) { rule *= 1 - fee; if (target === 1) entries++; pos = target; }
+    const move = closes[t + 1] / closes[t] - 1;
+    if (pos) { rule *= 1 + move; inDays++; }
+    hold *= 1 + move;
+    rp = Math.max(rp, rule); hp = Math.max(hp, hold);
+    rdd = Math.min(rdd, rule / rp - 1); hdd = Math.min(hdd, hold / hp - 1);
+  }
+  return {start_index: start, days, rule_return_pct: (rule - 1) * 100, hold_return_pct: (hold - 1) * 100,
+    rule_drawdown_pct: rdd * 100, hold_drawdown_pct: hdd * 100, entries, time_in_market_pct: inDays / days * 100};
+}
+
+/* ---------- one asset ---------- */
+function describeKind(market, contract) {
+  if (market === "spot") return ["Spot crypto (you own the coin)", false];
+  if (contract && String(contract.contractType || "").toUpperCase().includes("TRADIFI")) {
+    const u = String(contract.underlyingType || "").toUpperCase();
+    const label = UNDERLYING_LABELS[u] || u.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    return [label ? "TradFi perpetual future (" + label + ")" : "TradFi perpetual future", true];
+  }
+  return ["Crypto perpetual future", false];
+}
+
+function explain(s) {
+  const st = CFG.strategy, slow = st.slow_sma_days, fast = st.fast_sma_days, mom = st.momentum_days;
+  const checks = [
+    [s.a, `price is above its ${slow}-day average`, `price is below its ${slow}-day average`],
+    [s.b, `the ${fast}-day average is above the ${slow}-day`, `the ${fast}-day average is below the ${slow}-day`],
+    [s.c, `the ${mom}-day return is positive (${fmtPct(s.momentum * 100)})`,
+          `the ${mom}-day return is negative (${fmtPct(s.momentum * 100)})`]
+  ];
+  if (s.state === "IN") return "All three rules pass: " + checks.map(c => c[1]).join("; ") + ".";
+  if (s.state === "OUT") return `The long-term trend is down: ${checks[0][2]}. The rules stay out until that changes.`;
+  return "Mixed picture. Passing: " + checks.filter(c => c[0]).map(c => c[1]).join("; ") +
+    ". Failing: " + checks.filter(c => !c[0]).map(c => c[2]).join("; ") + ". The rules wait for all three.";
+}
+
+async function analyseAsset(item, catalogue, schedules) {
+  const symbol = String(item.symbol).toUpperCase().trim();
+  const market = String(item.market || "spot").toLowerCase().trim();
+  const r = {symbol, market, state: "ERROR", notes: [], kind: market === "spot" ? "Spot crypto" : "Perpetual future", is_tradfi: false};
+  let contract = null;
+  if (market === "futures" && catalogue) {
+    contract = catalogue[symbol];
+    if (!contract) {
+      r.explanation = symbol + " is not listed on Binance Futures. Check the spelling, or pick one from Settings > Browse TradFi contracts.";
+      return r;
+    }
+    if (contract.status !== "TRADING") r.notes.push("Contract status on Binance is " + contract.status + ", not TRADING.");
+  }
+  [r.kind, r.is_tradfi] = describeKind(market, contract);
+
+  let candles;
+  try { candles = await fetchCandles(market, symbol, Number(CFG.history_days)); }
+  catch (e) { r.explanation = e.message; return r; }
+  if (!candles.length) { r.explanation = "Binance returned no price history for this symbol."; return r; }
+
+  const st = CFG.strategy;
+  const closes = candles.map(c => c.close);
+  r.close = closes[closes.length - 1];
+  r.data_date = utcDate(candles[candles.length - 1].open_time);
+  r.history_days = closes.length;
+  const age = (Date.now() - candles[candles.length - 1].open_time) / DAY;
+  if (age > 3) r.notes.push("Latest price is " + Math.round(age) + " days old; the market may be suspended.");
+
+  const states = ruleStates(closes, st);
+  const latest = states[states.length - 1];
+  const needed = Math.max(st.slow_sma_days, st.fast_sma_days, st.momentum_days + 1);
+  if (!latest) {
+    r.state = "NO_DATA";
+    r.explanation = `Only ${closes.length} days of price history exist; the rules need ${needed}. No signal until then.`;
+  } else {
+    r.state = latest.state;
+    r.explanation = explain(latest);
+    r.sma_fast = latest.sma_fast; r.sma_slow = latest.sma_slow; r.momentum_pct = latest.momentum * 100;
+  }
+  r.volatility_pct = annualVolatility(closes);
+  if (r.state === "IN") r.size = positionSize(r.close, averageTrueRange(candles, st.atr_days));
+
+  const bt = backtest(closes, states, Number(CFG.fee_pct_per_trade));
+  if (bt) { bt.from_date = utcDate(candles[bt.start_index].open_time); bt.to_date = r.data_date; }
+  r.backtest = bt;
+
+  if (market === "futures") {
+    try { r.funding = await fetchFunding(symbol); }
+    catch (e) { r.funding = null; r.notes.push("Funding cost unavailable: " + e.message); }
+    if (r.funding && r.funding.annual_pct > Number(CFG.funding_warning_annual_pct)) {
+      r.notes.push("Expensive to hold: buyers have been paying about " + Math.round(r.funding.annual_pct) + "% a year in funding.");
+    }
+    if (r.is_tradfi && contract) {
+      r.session = currentSession(schedules, contract.underlyingType);
+      if (r.session && !r.session.startsWith("open")) {
+        r.notes.push("The underlying market is outside regular hours right now (" + r.session + "). The contract " +
+          "still trades, but prices are thinner and can gap when the market reopens.");
+      }
+    }
+  }
+  return r;
+}
+
+function capTotalExposure(results) {
+  const sized = results.filter(r => r.size);
+  let total = sized.reduce((a, r) => a + r.size.usdt, 0);
+  const portfolio = Number(CFG.portfolio_usdt);
+  if (total > portfolio && portfolio > 0) {
+    const k = portfolio / total;
+    for (const r of sized) {
+      for (const key of ["usdt", "pct_of_portfolio", "loss_if_stopped"]) r.size[key] *= k;
+      r.size.scaled = true;
+    }
+    total = portfolio;
+  }
+  return total;
+}
+
+async function pool(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  async function worker() { while (next < items.length) { const i = next++; out[i] = await fn(items[i], i); } }
+  await Promise.all(Array.from({length: Math.min(limit, items.length)}, worker));
+  return out;
+}
+
+/* ---------- log ---------- */
+const LOG_COLUMNS = ["run_time_utc", "data_date", "symbol", "market", "kind", "close", "signal", "sma_fast", "sma_slow",
+  "momentum_pct", "volatility_pct", "funding_annual_pct", "suggested_usdt", "stop_price"];
+const LOG_LIMIT = 5000;
+
+function appendLog(results) {
+  const log = store.get("log", []);
+  const seen = new Set(log.map(r => r.data_date + "|" + r.symbol + "|" + r.market));
+  const run = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const num = (v, d = 6) => v == null ? "" : Number(v.toFixed(d));
+  let added = 0;
+  for (const r of results) {
+    if (!r.data_date || seen.has(r.data_date + "|" + r.symbol + "|" + r.market)) continue;
+    const s = r.size || {};
+    log.push({run_time_utc: run, data_date: r.data_date, symbol: r.symbol, market: r.market, kind: r.kind,
+      close: r.close, signal: SIGNAL_TEXT[r.state], sma_fast: num(r.sma_fast), sma_slow: num(r.sma_slow),
+      momentum_pct: num(r.momentum_pct, 2), volatility_pct: num(r.volatility_pct, 1),
+      funding_annual_pct: num(r.funding && r.funding.annual_pct, 2), suggested_usdt: num(s.usdt, 2),
+      stop_price: num(s.stop_price)});
+    added++;
+  }
+  while (log.length > LOG_LIMIT) log.shift();
+  store.set("log", log);
+  return added;
+}
+
+function logCSV() {
+  const log = store.get("log", []);
+  const q = v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return [LOG_COLUMNS.join(",")].concat(log.map(r => LOG_COLUMNS.map(c => q(r[c])).join(","))).join("\n");
+}
+
+/* ---------- running ---------- */
+let LAST = store.get("last", null);
+let CATALOGUE = null;
+let running = false;
+
+async function runAgent() {
+  if (running) return;
+  running = true;
+  const btn = document.getElementById("refresh");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Running';
+  for (const k of Object.keys(unreachable)) delete unreachable[k];
+  const problems = [];
+  let schedules = {};
+  try {
+    const usesFutures = CFG.watchlist.some(i => String(i.market).toLowerCase() === "futures");
+    if (usesFutures) {
+      setStatus("Loading futures contract list...");
+      try { CATALOGUE = await fetchCatalogue(); }
+      catch (e) { CATALOGUE = null; problems.push("Could not load the futures contract list: " + e.message); }
+      try { schedules = await fetchSessions(); } catch (e) { schedules = {}; }
+    }
+    let done = 0;
+    setStatus(`Analysing 0 of ${CFG.watchlist.length}...`);
+    const results = await pool(CFG.watchlist, 3, async item => {
+      const r = await analyseAsset(item, CATALOGUE, schedules);
+      done++;
+      setStatus(`Analysing ${done} of ${CFG.watchlist.length}...`);
+      return r;
+    });
+    if (results.length && results.every(r => r.state === "ERROR")) {
+      LAST = {ran_at: Date.now(), results, total: 0, problems, failed: true};
+    } else {
+      const total = capTotalExposure(results);
+      LAST = {ran_at: Date.now(), results, total, problems, portfolio: Number(CFG.portfolio_usdt)};
+      const added = appendLog(results);
+      if (added) toast(added + " new signal" + (added > 1 ? "s" : "") + " logged");
+    }
+    store.set("last", LAST);
+  } catch (e) {
+    LAST = {ran_at: Date.now(), results: [], problems: ["Unexpected problem: " + e.message], failed: true};
+  } finally {
+    running = false;
+    btn.disabled = false;
+    btn.textContent = "Refresh";
+    renderAll();
+  }
+}
+
+/* ---------- UI ---------- */
+function setStatus(text) { document.getElementById("status").textContent = text; }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function renderStatus() {
+  if (running) return;
+  if (!LAST) return setStatus("Not run yet");
+  const dates = (LAST.results || []).map(r => r.data_date).filter(Boolean).sort();
+  setStatus((dates.length ? "Daily close " + dates[dates.length - 1] + " UTC · " : "") + "updated " + ago(LAST.ran_at));
+}
+
+function cardHTML(r) {
+  const st = CFG.strategy;
+  let h = `<div class="card"><div class="head"><div><div class="sym">${esc(r.symbol)}</div>` +
+    `<div class="kind">${esc(r.kind)}</div></div><span class="badge ${esc(r.state)}">${esc(SIGNAL_TEXT[r.state])}</span></div>` +
+    `<p class="why">${esc(r.explanation || "")}</p>`;
+  const facts = [];
+  if (r.close != null) facts.push(["Last daily close", fmtPrice(r.close) + " USDT"]);
+  if (r.sma_slow != null) {
+    facts.push([st.slow_sma_days + "-day average", fmtPrice(r.sma_slow)]);
+    facts.push([st.fast_sma_days + "-day average", fmtPrice(r.sma_fast)]);
+    facts.push([st.momentum_days + "-day return", fmtPct(r.momentum_pct)]);
+  }
+  if (r.volatility_pct != null) facts.push(["Volatility (yearly)", fmtPct(r.volatility_pct, false, 0)]);
+  if (r.funding) facts.push(["Funding, last " + Math.round(r.funding.span_days) + " days",
+    fmtPct(r.funding.total_pct, true, 2) + " (" + fmtPct(r.funding.annual_pct, true, 0) + " a year)"]);
+  if (r.session) facts.push(["Underlying market now", r.session]);
+  if (facts.length) h += '<dl class="grid">' + facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("") + "</dl>";
+  const s = r.size;
+  if (s) {
+    let limit = "";
+    if (s.scaled) limit = " Scaled down so all positions together fit inside the portfolio.";
+    else if (s.capped) limit = ` Limited by the ${CFG.max_position_pct}% per-asset cap.`;
+    h += `<div class="plan"><strong>If you act on it:</strong> at most ${fmtUsdt(s.usdt)} USDT ` +
+      `(${Math.round(s.pct_of_portfolio)}% of portfolio), no leverage, with a stop at ${esc(fmtPrice(s.stop_price))} ` +
+      `(${s.stop_pct.toFixed(1)}% below the close). A stop-out would lose about ${fmtUsdt(s.loss_if_stopped)} USDT.${esc(limit)}</div>`;
+  }
+  for (const n of r.notes || []) h += `<p class="note">Note: ${esc(n)}</p>`;
+  return h + "</div>";
+}
+
+function renderSignals() {
+  const el = document.getElementById("tab-signals");
+  let h = '<div class="banner"><strong>Read-only.</strong> This app cannot trade. Each signal is the mechanical ' +
+    "result of fixed rules applied to past prices. It is not a prediction and will often be wrong.</div>";
+  if (!LAST) {
+    el.innerHTML = h + '<div class="empty"><p>Tap <strong>Refresh</strong> to download the latest daily prices from Binance and run the rules.</p>' +
+      '<button class="btn" onclick="runAgent()">Run now</button></div>';
+    return;
+  }
+  for (const p of LAST.problems || []) h += `<div class="banner err">${esc(p)}</div>`;
+  const results = LAST.results || [];
+  if (LAST.failed) {
+    const first = results.find(r => r.explanation);
+    h += `<div class="banner err"><strong>No data could be downloaded.</strong> ${esc(first ? first.explanation : "")}</div>`;
+    el.innerHTML = h; return;
+  }
+  const counts = {};
+  for (const r of results) counts[r.state] = (counts[r.state] || 0) + 1;
+  const summary = Object.keys(SIGNAL_TEXT).filter(k => counts[k]).map(k => counts[k] + " " + SIGNAL_TEXT[k].toLowerCase()).join(", ");
+  const pf = LAST.portfolio || Number(CFG.portfolio_usdt);
+  h += `<p class="summary">${esc(summary)}. Suggested positions add up to ${fmtUsdt(LAST.total || 0)} of ` +
+    `${fmtUsdt(pf)} USDT (${pf ? Math.round((LAST.total || 0) / pf * 100) : 0}%).</p>`;
+  h += results.map(cardHTML).join("");
+  el.innerHTML = h;
+}
+
+function renderBacktest() {
+  const el = document.getElementById("tab-backtest");
+  let h = '<p class="small">The same rules, replayed day by day over past prices, next to simply buying and holding. ' +
+    "Each decision uses only prices known at that day's close.</p>";
+  const results = (LAST && LAST.results) || [];
+  const rows = results.filter(r => r.state !== "ERROR");
+  if (!rows.length) { el.innerHTML = h + '<div class="empty">Run the agent first.</div>'; return; }
+  for (const r of rows) {
+    const b = r.backtest;
+    if (!b) { h += `<div class="bt"><strong>${esc(r.symbol)}</strong><p class="small">Too little history to test.</p></div>`; continue; }
+    const yrs = b.days / 365;
+    const beat = b.rule_return_pct > b.hold_return_pct;
+    const safer = b.rule_drawdown_pct > b.hold_drawdown_pct;
+    const verdict = beat
+      ? (safer ? "The rules returned more, with a smaller worst drop." : "The rules returned more, but with a deeper worst drop.")
+      : (safer ? "Buy-and-hold returned more. The rules had a smaller worst drop." : "Buy-and-hold returned more, with a smaller worst drop.");
+    h += `<div class="bt"><div class="head"><strong>${esc(r.symbol)}</strong>` +
+      `<span class="small">since ${esc(b.from_date)} (${yrs.toFixed(1)} yrs)</span></div>` +
+      `<div class="row"><span>Rules: return</span><span>${fmtPct(b.rule_return_pct, true, 0)}</span></div>` +
+      `<div class="row"><span>Buy &amp; hold: return</span><span>${fmtPct(b.hold_return_pct, true, 0)}</span></div>` +
+      `<div class="row"><span>Rules: worst drop</span><span>${fmtPct(b.rule_drawdown_pct, true, 0)}</span></div>` +
+      `<div class="row"><span>Buy &amp; hold: worst drop</span><span>${fmtPct(b.hold_drawdown_pct, true, 0)}</span></div>` +
+      `<div class="row"><span>Buys / time invested</span><span>${b.entries} / ${Math.round(b.time_in_market_pct)}%</span></div>` +
+      `<div class="verdict ${beat ? "good" : "bad"}">${esc(verdict)}${yrs < 1.5 ? ' <span class="small">(too short to mean much)</span>' : ""}</div></div>`;
+  }
+  h += '<ul class="small">' +
+    `<li>A fee of ${esc(CFG.fee_pct_per_trade)}% is charged on every buy and sell. Funding costs on futures are not included, so futures results are somewhat flattering.</li>` +
+    "<li>A test shorter than a year or two says very little. Most TradFi contracts only launched in 2026.</li>" +
+    "<li>A good past result does not show the rules will work in future. If they don't beat buy-and-hold here, take that seriously.</li></ul>";
+  el.innerHTML = h;
+}
+
+function renderLog() {
+  const el = document.getElementById("tab-log");
+  const log = store.get("log", []);
+  let h = '<p class="small">Every signal the app has produced, one row per asset per day, kept on this phone. ' +
+    "Over time it becomes the real track record of the rules.</p>" +
+    '<div style="display:flex;gap:8px;margin:8px 0 4px"><button class="btn sm" id="dl">Download CSV</button>' +
+    '<button class="btn sm ghost" id="cp">Copy CSV</button></div>';
+  if (!log.length) { el.innerHTML = h + '<div class="empty">No signals logged yet.</div>'; bindLog(); return; }
+  const recent = log.slice(-60).reverse();
+  h += `<p class="small">${log.length} rows. Latest ${recent.length} shown.</p><div style="overflow-x:auto">` +
+    '<table class="log"><thead><tr><th>Date</th><th>Asset</th><th>Signal</th><th style="text-align:right">Close</th></tr></thead><tbody>' +
+    recent.map(r => `<tr><td>${esc(r.data_date)}</td><td>${esc(r.symbol)}</td><td>${esc(r.signal)}</td>` +
+      `<td style="text-align:right">${esc(fmtPrice(Number(r.close)))}</td></tr>`).join("") + "</tbody></table></div>";
+  el.innerHTML = h; bindLog();
+}
+function bindLog() {
+  document.getElementById("dl").onclick = () => {
+    try {
+      const blob = new Blob([logCSV()], {type: "text/csv"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "signals_log_" + new Date().toISOString().slice(0, 10) + ".csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (e) { toast("Download not available here; use Copy"); }
+  };
+  document.getElementById("cp").onclick = async () => {
+    try { await navigator.clipboard.writeText(logCSV()); toast("Copied"); } catch (e) { toast("Copy not allowed here"); }
+  };
+}
+
+function renderSettings() {
+  const el = document.getElementById("tab-settings");
+  const st = CFG.strategy;
+  const num = (id, label, val, step) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" id="${id}" value="${esc(val)}" step="${step}"></label>`;
+  el.innerHTML =
+    "<h2>Watchlist</h2>" +
+    '<div class="card"><div id="wl"></div>' +
+    '<div class="addrow"><input id="addsym" placeholder="e.g. SOLUSDT" autocapitalize="characters" autocomplete="off">' +
+    '<select id="addmkt"><option value="spot">Spot</option><option value="futures">Futures</option></select>' +
+    '<button class="btn sm" id="addbtn">Add</button></div></div>' +
+    '<details class="box" id="tfbox"><summary>Browse TradFi contracts</summary><div id="tflist" class="small">Loading...</div></details>' +
+    "<h2>Money and risk</h2>" +
+    '<div class="card"><div class="two">' +
+    num("pf", "Portfolio (USDT)", CFG.portfolio_usdt, "any") +
+    num("risk", "Risk per trade (%)", CFG.risk_per_trade_pct, "0.1") +
+    num("cap", "Max in one asset (%)", CFG.max_position_pct, "1") +
+    num("fee", "Fee per trade (%)", CFG.fee_pct_per_trade, "0.01") +
+    num("fw", "Funding warning (%/yr)", CFG.funding_warning_annual_pct, "1") +
+    num("hd", "History to download (days)", CFG.history_days, "1") +
+    "</div></div>" +
+    "<h2>Rules</h2>" +
+    '<div class="card"><div class="two">' +
+    num("fast", "Fast average (days)", st.fast_sma_days, "1") +
+    num("slow", "Slow average (days)", st.slow_sma_days, "1") +
+    num("mom", "Momentum window (days)", st.momentum_days, "1") +
+    num("atr", "Range window (days)", st.atr_days, "1") +
+    num("stop", "Stop distance (x range)", st.stop_atr_multiple, "0.1") +
+    '</div><p class="small">Hold / buy when price is above the slow average, the fast average is above the slow, ' +
+    "and the momentum-window return is positive. These defaults are a textbook template, not a recommendation.</p></div>" +
+    '<details class="box"><summary>Advanced</summary>' +
+    `<label class="f"><span>Spot API address</span><input id="eps" value="${esc(CFG.endpoints.spot)}" autocomplete="off"></label>` +
+    `<label class="f"><span>Futures API address</span><input id="epf" value="${esc(CFG.endpoints.futures)}" autocomplete="off"></label>` +
+    "</details>" +
+    '<p id="serr" class="note" hidden></p>' +
+    '<div style="display:flex;gap:8px;margin:14px 0"><button class="btn" id="save">Save settings</button>' +
+    '<button class="btn ghost" id="reset">Reset to defaults</button></div>' +
+    `<p class="small">Version ${VERSION}. Settings and the log are stored only on this phone, in this browser.</p>`;
+
+  renderWatchlist();
+  document.getElementById("addbtn").onclick = () => {
+    const input = document.getElementById("addsym");
+    const sym = input.value.toUpperCase().replace(/[^A-Z0-9_]/g, "");
+    const mkt = document.getElementById("addmkt").value;
+    if (!sym) return;
+    if (CFG.watchlist.some(w => w.symbol === sym && w.market === mkt)) return toast("Already on the list");
+    CFG.watchlist.push({symbol: sym, market: mkt}); saveConfig(); renderWatchlist(); input.value = ""; toast(sym + " added");
+  };
+  document.getElementById("tfbox").addEventListener("toggle", e => { if (e.target.open) loadTradfi(); });
+  document.getElementById("save").onclick = saveSettingsForm;
+  document.getElementById("reset").onclick = () => {
+    const b = document.getElementById("reset");
+    if (b.dataset.sure) { CFG = clone(DEFAULTS); saveConfig(); renderSettings(); toast("Defaults restored"); }
+    else { b.dataset.sure = "1"; b.textContent = "Tap again to confirm"; }
+  };
+}
+
+function renderWatchlist() {
+  const wl = document.getElementById("wl");
+  if (!wl) return;
+  wl.innerHTML = CFG.watchlist.length ? CFG.watchlist.map((w, i) =>
+    `<div class="wl"><div><strong>${esc(w.symbol)}</strong> <span class="m">${w.market === "spot" ? "spot" : "futures"}</span></div>` +
+    `<button class="x" data-rm="${i}">Remove</button></div>`).join("") : '<p class="small">Empty. Add something below.</p>';
+  wl.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
+    const w = CFG.watchlist.splice(Number(b.dataset.rm), 1)[0];
+    saveConfig(); renderWatchlist();
+    const chip = document.querySelector(`[data-tf="${w.symbol}"]`);
+    if (chip && w.market === "futures") chip.classList.remove("on");
+  });
+}
+
+async function loadTradfi() {
+  const box = document.getElementById("tflist");
+  try {
+    if (!CATALOGUE) CATALOGUE = await fetchCatalogue();
+  } catch (e) { box.textContent = e.message; delete unreachable[CFG.endpoints.futures]; return; }
+  const groups = {};
+  for (const [sym, c] of Object.entries(CATALOGUE)) {
+    if (!String(c.contractType || "").toUpperCase().includes("TRADIFI") || c.status !== "TRADING") continue;
+    const u = String(c.underlyingType || "OTHER").toUpperCase();
+    (groups[u] = groups[u] || []).push(sym);
+  }
+  const keys = Object.keys(groups).sort();
+  if (!keys.length) { box.textContent = "No TradFi contracts found."; return; }
+  const on = new Set(CFG.watchlist.filter(w => w.market === "futures").map(w => w.symbol));
+  box.innerHTML = '<p class="small">Tap to add or remove. All are leveraged perpetual futures; the app assumes 1x.</p>' +
+    keys.map(k => `<div style="margin-top:8px"><strong>${esc(UNDERLYING_LABELS[k] || k)}</strong> <span class="small">(${groups[k].length})</span>` +
+      '<div class="chips">' + groups[k].sort().map(s => `<button class="chip${on.has(s) ? " on" : ""}" data-tf="${esc(s)}">${esc(s)}</button>`).join("") +
+      "</div></div>").join("");
+  box.querySelectorAll("[data-tf]").forEach(b => b.onclick = () => {
+    const s = b.dataset.tf;
+    const i = CFG.watchlist.findIndex(w => w.symbol === s && w.market === "futures");
+    if (i >= 0) { CFG.watchlist.splice(i, 1); b.classList.remove("on"); toast(s + " removed"); }
+    else { CFG.watchlist.push({symbol: s, market: "futures"}); b.classList.add("on"); toast(s + " added"); }
+    saveConfig(); renderWatchlist();
+  });
+}
+
+function saveSettingsForm() {
+  const v = id => document.getElementById(id).value.trim();
+  const n = id => Number(v(id));
+  const int = id => Number.isInteger(n(id)) ? n(id) : NaN;
+  const errors = [];
+  const next = clone(CFG);
+  next.portfolio_usdt = n("pf"); if (!(next.portfolio_usdt > 0)) errors.push("Portfolio must be above 0.");
+  next.risk_per_trade_pct = n("risk"); if (!(next.risk_per_trade_pct > 0 && next.risk_per_trade_pct <= 100)) errors.push("Risk per trade must be between 0 and 100.");
+  next.max_position_pct = n("cap"); if (!(next.max_position_pct > 0 && next.max_position_pct <= 100)) errors.push("Max in one asset must be between 0 and 100.");
+  next.fee_pct_per_trade = n("fee"); if (!(next.fee_pct_per_trade >= 0) || v("fee") === "") errors.push("Fee cannot be negative or empty.");
+  next.funding_warning_annual_pct = n("fw"); if (!isFinite(next.funding_warning_annual_pct) || v("fw") === "") errors.push("Funding warning must be a number.");
+  next.history_days = int("hd"); if (!(next.history_days >= 30 && next.history_days <= 5000)) errors.push("History must be a whole number from 30 to 5000.");
+  const s = next.strategy;
+  s.fast_sma_days = int("fast"); s.slow_sma_days = int("slow"); s.momentum_days = int("mom"); s.atr_days = int("atr");
+  s.stop_atr_multiple = n("stop");
+  for (const [k, label] of [["fast_sma_days", "Fast average"], ["slow_sma_days", "Slow average"], ["momentum_days", "Momentum window"], ["atr_days", "Range window"]]) {
+    if (!(s[k] >= 2)) errors.push(label + " must be a whole number of 2 or more.");
+  }
+  if (s.fast_sma_days >= s.slow_sma_days) errors.push("Fast average must be shorter than the slow average.");
+  if (!(s.stop_atr_multiple > 0)) errors.push("Stop distance must be above 0.");
+  next.endpoints.spot = v("eps") || DEFAULTS.endpoints.spot;
+  next.endpoints.futures = v("epf") || DEFAULTS.endpoints.futures;
+  const box = document.getElementById("serr");
+  if (errors.length) { box.hidden = false; box.textContent = errors.join(" "); return; }
+  box.hidden = true;
+  if (next.endpoints.futures !== CFG.endpoints.futures) CATALOGUE = null;
+  CFG = next; saveConfig(); toast("Saved. Tap Refresh to rerun.");
+}
+
+function saveConfig() { if (!store.set("config", CFG)) toast("Could not save on this browser"); }
+
+function renderAll() { renderStatus(); renderSignals(); renderBacktest(); renderLog(); }
+
+document.querySelectorAll("nav [data-tab]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav [data-tab]").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+  for (const t of ["signals", "backtest", "log", "settings"]) document.getElementById("tab-" + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === "settings") renderSettings();
+  if (b.dataset.tab === "log") renderLog();
+  window.scrollTo(0, 0);
+});
+document.getElementById("refresh").onclick = runAgent;
+setInterval(renderStatus, 60000);
+renderAll();
+renderSettings();
+// Auto-run on open if the last run is from before the latest daily close (00:00 UTC).
+if (!LAST || LAST.ran_at < Math.floor(Date.now() / DAY) * DAY) runAgent();
+</script>
+</body>
+</html>
